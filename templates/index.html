@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DB Guardian AI - Smart Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f3e8ff, #e0f7fa);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 50px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: #7e57c2;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 40px;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-links li a:hover {
+            color: #7e57c2;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2ecc71;
+        }
+
+        .section {
+            display: none;
+            padding: 30px 50px;
+            flex: 1;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .main {
+            display: flex;
+            height: 100%;
+        }
+
+        .left-panel {
+            width: 35%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: conic-gradient(#7e57c2 0deg, #e0e0e0 0deg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #5e35b1;
+            background-color: white;
+            box-shadow: 0 8px 20px rgba(94,53,177,0.15);
+        }
+
+        .right-panel {
+            width: 65%;
+            padding: 20px;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+           .small-status {
+    position: absolute;
+    top: 95px;
+    right: 50px;
+
+    padding: 8px 14px;      /* ← SIZE CONTROL */
+    font-size: 13px;        /* ← TEXT SIZE */
+    border-radius: 10px;
+
+    font-weight: 500;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+
+    transition: all 0.3s ease;
+}
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 12px;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: #7e57c2;
+        }
+
+        .report-btn {
+            padding: 10px 20px;
+            background: #7e57c2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="logo"> DB Guardian AI</div>
+    <ul class="nav-links">
+        <li><a onclick="showSection('dashboard')">Dashboard</a></li>
+        <li><a onclick="showSection('analytics')">Analytics</a></li>
+        <li><a onclick="showSection('logs')">Logs</a></li>
+        <li><a onclick="showSection('reports')">Reports</a></li>
+    </ul>
+    <div class="status-indicator">
+        <span class="dot" id="navStatusDot"></span>
+        <span id="navStatusText">Live</span>
+    </div>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="dashboardSection" class="section active">
+
+    <!-- BIG STATUS BOX -->
+    <div id="dashboardStatus" class="small-status">
+    ✅ Database is Operating Normally
+</div>
+
+    <div class="main">
+        <div class="left-panel">
+            <div id="cpuCircle" class="circle">CPU 0%</div>
+            <div id="memoryCircle" class="circle">Memory 0%</div>
+            <div id="diskCircle" class="circle">Disk 0%</div>
+        </div>
+        <div class="right-panel">
+            <canvas id="metricsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ANALYTICS -->
+<div id="analyticsSection" class="section">
+    <h2>📊 Advanced Analytics</h2>
+    <div style="display:flex; gap:25px; flex-wrap:wrap;">
+        <div class="card" style="flex:1;">
+            <h3>Average CPU Usage</h3>
+            <p id="avgCpu" style="font-size:28px;font-weight:bold;color:#4a6cf7;">-- %</p>
+        </div>
+        <div class="card" style="flex:1;">
+            <h3>Peak CPU Usage</h3>
+            <p id="peakCpu" style="font-size:28px;font-weight:bold;color:#e67e22;">-- %</p>
+        </div>
+        <div class="card" style="flex:1;">
+            <h3>Total Data Points</h3>
+            <p id="totalPoints" style="font-size:28px;font-weight:bold;color:#2ecc71;">--</p>
+        </div>
+    </div>
+</div>
+
+<!-- LOGS -->
+<div id="logsSection" class="section">
+    <h2>📁 Live Activity Logs</h2>
+    <div class="card" style="max-height:350px; overflow-y:auto; background:#1e1e1e; padding:20px;">
+        <div id="logsContent" style="font-family:monospace;color:#00ff99;display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+</div>
+
+<!-- REPORTS -->
+<div id="reportsSection" class="section">
+    <h2>📄 System Performance Report</h2>
+    <div class="card">
+        <p>Total Data Points: <strong id="reportTotal">--</strong></p>
+        <p>Average CPU Usage: <strong id="reportAvg">-- %</strong></p>
+        <p>Peak CPU Usage: <strong id="reportPeak">-- %</strong></p>
+    </div>
+    <div class="card">
+        <button class="report-btn" onclick="generateReport()">Generate Report</button>
+        <p id="reportStatus"></p>
+    </div>
+</div>
+
+<footer>
+    Real-Time AI Monitoring | Isolation Forest Detection
+</footer>
+
+<script>
+let ctx = document.getElementById('metricsChart').getContext('2d');
+
+let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            { label: 'CPU %', borderColor: '#7e57c2', data: [], tension: 0.4 },
+            { label: 'Memory %', borderColor: '#26a69a', data: [], tension: 0.4 },
+            { label: 'Disk %', borderColor: '#ff7043', data: [], tension: 0.4 }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
+});
+
+function showSection(name) {
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(name + "Section").classList.add('active');
+}
+
+function updateCircle(id, value, color) {
+    let circle = document.getElementById(id);
+    let degree = value * 3.6;
+    circle.style.background = `conic-gradient(${color} ${degree}deg, #e0e0e0 ${degree}deg)`;
+    circle.innerText = id.replace("Circle","") + " " + value + "%";
+}
+
+if (!window.cpuHistory) window.cpuHistory = [];
+
+function fetchData() {
+    fetch('/metrics')
+        .then(response => response.json())
+        .then(data => {
+
+            updateCircle("cpuCircle", data.cpu, "#7e57c2");
+            updateCircle("memoryCircle", data.memory, "#26a69a");
+            updateCircle("diskCircle", data.disk, "#ff7043");
+
+            chart.data.labels.push(data.timestamp);
+            chart.data.datasets[0].data.push(data.cpu);
+            chart.data.datasets[1].data.push(data.memory);
+            chart.data.datasets[2].data.push(data.disk);
+
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(ds => ds.data.shift());
+            }
+
+            chart.update();
+
+            window.cpuHistory.push(data.cpu);
+
+            document.getElementById("avgCpu").innerText =
+                (window.cpuHistory.reduce((a,b)=>a+b,0)/window.cpuHistory.length).toFixed(2)+" %";
+            document.getElementById("peakCpu").innerText =
+                Math.max(...window.cpuHistory)+" %";
+            document.getElementById("totalPoints").innerText =
+                window.cpuHistory.length;
+
+            let logsDiv = document.getElementById("logsContent");
+            let logEntry = document.createElement("div");
+            logEntry.innerHTML =
+                `<span style="color:#4fc3f7;">[${data.timestamp}]</span>
+                 CPU: ${data.cpu}% | Memory: ${data.memory}% | Disk: ${data.disk}%`;
+            logsDiv.prepend(logEntry);
+
+            let navDot = document.getElementById("navStatusDot");
+            let navText = document.getElementById("navStatusText");
+            let dashboardStatus = document.getElementById("dashboardStatus");
+
+            if (data.alert) {
+                navDot.style.background = "#e74c3c";
+                navText.innerText = "Alert";
+                dashboardStatus.style.background = "#ffebee";
+                dashboardStatus.style.color = "#c62828";
+                dashboardStatus.innerText = "⚠️ Potential Downtime Risk Detected!";
+            } else {
+                navDot.style.background = "#2ecc71";
+                navText.innerText = "Live";
+                dashboardStatus.style.background = "#e8f5e9";
+                dashboardStatus.style.color = "#2e7d32";
+                dashboardStatus.innerText = "✅ Database is Operating Normally";
+            }
+        });
+}
+
+function fetchData() {
+    fetch('/metrics')
+        .then(response => response.json())
+        .then(data => {
+
+            // Update circles
+            updateCircle("cpuCircle", data.cpu, "#7e57c2");
+            updateCircle("memoryCircle", data.memory, "#26a69a");
+            updateCircle("diskCircle", data.disk, "#ff7043");
+
+            // Update chart
+            chart.data.labels.push(data.timestamp);
+            chart.data.datasets[0].data.push(data.cpu);
+            chart.data.datasets[1].data.push(data.memory);
+            chart.data.datasets[2].data.push(data.disk);
+
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(ds => ds.data.shift());
+            }
+
+            chart.update();
+
+            // Store CPU history
+            window.cpuHistory.push(data.cpu);
+
+            let total = window.cpuHistory.length;
+            let avg = (window.cpuHistory.reduce((a,b)=>a+b,0)/total).toFixed(2);
+            let peak = Math.max(...window.cpuHistory);
+
+            // ✅ Update Analytics page
+            document.getElementById("avgCpu").innerText = avg + " %";
+            document.getElementById("peakCpu").innerText = peak + " %";
+            document.getElementById("totalPoints").innerText = total;
+
+            // ✅ UPDATE REPORT PAGE (THIS WAS MISSING)
+            document.getElementById("reportTotal").innerText = total;
+            document.getElementById("reportAvg").innerText = avg + " %";
+            document.getElementById("reportPeak").innerText = peak + " %";
+
+            // Logs
+            let logsDiv = document.getElementById("logsContent");
+            let logEntry = document.createElement("div");
+            logEntry.innerHTML =
+                `<span style="color:#4fc3f7;">[${data.timestamp}]</span>
+                 CPU: ${data.cpu}% | Memory: ${data.memory}% | Disk: ${data.disk}%`;
+            logsDiv.prepend(logEntry);
+
+            // Status
+            let navDot = document.getElementById("navStatusDot");
+            let navText = document.getElementById("navStatusText");
+            let dashboardStatus = document.getElementById("dashboardStatus");
+
+            if (data.alert) {
+                navDot.style.background = "#e74c3c";
+                navText.innerText = "Alert";
+                dashboardStatus.style.background = "#ffebee";
+                dashboardStatus.style.color = "#c62828";
+                dashboardStatus.innerText = "⚠️ Potential Downtime Risk Detected!";
+            } else {
+                navDot.style.background = "#2ecc71";
+                navText.innerText = "Live";
+                dashboardStatus.style.background = "#e8f5e9";
+                dashboardStatus.style.color = "#2e7d32";
+                dashboardStatus.innerText = "✅ Database is Operating Normally";
+            }
+        });
+}
+function generateReport() {
+
+    if (!window.cpuHistory || window.cpuHistory.length === 0) {
+        document.getElementById("reportStatus").innerText =
+            "⚠️ No monitoring data available yet.";
+        return;
+    }
+
+    let total = window.cpuHistory.length;
+    let avg = (window.cpuHistory.reduce((a,b)=>a+b,0)/total).toFixed(2);
+    let peak = Math.max(...window.cpuHistory);
+
+    let now = new Date().toLocaleString();
+
+    let csvContent =
+`DB Guardian AI - System Report
+Generated At,${now}
+
+Total Data Points,${total}
+Average CPU Usage,${avg} %
+Peak CPU Usage,${peak} %
+
+Raw CPU Data
+${window.cpuHistory.join(",")}
+`;
+
+    try {
+        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        let link = document.createElement("a");
+
+        if (link.download !== undefined) {
+            let url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "DB_Guardian_Report.csv");
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById("reportStatus").innerText =
+            "✅ Report downloaded at " + new Date().toLocaleTimeString();
+
+    } catch (error) {
+        document.getElementById("reportStatus").innerText =
+            "❌ Report generation failed.";
+        console.error(error);
+    }
+}
+setInterval(fetchData, 3000);
+</script>
+
+</body>
+</html>
